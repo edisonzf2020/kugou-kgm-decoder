@@ -22,9 +22,11 @@ pub struct Config {
     /// Delete original file after decoding
     #[clap(short = 'd', long)]
     pub delete_file: bool,
-    // Write to standard output and don't delete input files
-    // #[clap(short, long)]
-    // stdout: bool,
+
+    /// Path to KuGou key file for KGG decryption.
+    /// Supports: .db (SQLCipher), .txt (key=value), .json ({"key": "value"})
+    #[clap(long, value_name = "PATH")]
+    pub kgg_db: Option<String>,
 }
 
 fn after_help() -> String {

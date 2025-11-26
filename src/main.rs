@@ -12,23 +12,66 @@ fn main() {
     let cfg = cfg::get();
 
     let files = get_all_files(Path::new(&cfg.target), cfg.recursive);
+    
+    // 检查是否有 KGG 文件
+    let has_kgg = files.iter().any(|f| {
+        f.extension()
+            .map(|e| e.to_string_lossy().to_lowercase() == "kgg")
+            .unwrap_or(false)
+    });
+
+    // 加载 KGG 密钥映射
+    let key_map = if has_kgg {
+        if let Some(db_path) = &cfg.kgg_db {
+            // 使用用户指定的数据库路径
+            match decoder::load_key_map_from_db(Path::new(db_path)) {
+                Ok(map) => {
+                    println!("Loaded {} keys from KGG database", map.len());
+                    Some(map)
+                }
+                Err(e) => {
+                    println!("Warning: Failed to load KGG database: {}", e);
+                    None
+                }
+            }
+        } else {
+            // 自动查找数据库
+            match decoder::auto_load_key_map() {
+                Ok(map) => {
+                    println!("Loaded {} keys from KGG database", map.len());
+                    Some(map)
+                }
+                Err(e) => {
+                    println!("Warning: {}", e);
+                    None
+                }
+            }
+        }
+    } else {
+        None
+    };
 
     println!("{} files found", files.len());
-    let count = decode(&files);
+    let count = decode(&files, key_map.as_ref());
     println!("Completed {}/{}", count, files.len());
 }
 
-fn decode(files: &Vec<Box<Path>>) -> usize {
+fn decode(files: &Vec<Box<Path>>, key_map: Option<&decoder::KeyMap>) -> usize {
     let cfg = cfg::get();
 
     let mut count = 0usize;
     let mut buf = [0; 16 * 1024];
     for file in files {
-        // 使用新的解码器工厂，支持多种格式
-        let mut origin = match decoder::new_from_file(file) {
+        // 使用新的解码器工厂，支持多种格式（包括 KGG）
+        let mut origin = match decoder::new_from_file_with_keymap(file, key_map) {
             Some(val) => val,
             None => {
-                println!(r#"Skip: "{}", no decoder"#, file.display());
+                // 检查是否是 KGG 文件但没有提供数据库
+                if file.extension().map(|e| e.to_string_lossy().to_lowercase()) == Some("kgg".to_string()) {
+                    println!(r#"Skip: "{}", KGG file requires --kgg-db option"#, file.display());
+                } else {
+                    println!(r#"Skip: "{}", no decoder"#, file.display());
+                }
                 continue;
             }
         };
