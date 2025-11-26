@@ -19,9 +19,9 @@ pub struct Config {
     #[clap(short, long)]
     pub recursive: bool,
 
-    /// Keep original file
-    #[clap(short, long)]
-    pub keep_file: bool,
+    /// Delete original file after decoding
+    #[clap(short = 'd', long)]
+    pub delete_file: bool,
     // Write to standard output and don't delete input files
     // #[clap(short, long)]
     // stdout: bool,

@@ -138,14 +138,14 @@ fn decode(files: &Vec<Box<Path>>) -> usize {
             }
         }
 
-        if !cfg.keep_file
-            && let Err(err) = fs::remove_file(file)
-        {
-            println!(
-                r#"Warning: Unable to delete file "{}", {}"#,
-                file.display(),
-                err
-            );
+        if cfg.delete_file {
+            if let Err(err) = fs::remove_file(file) {
+                println!(
+                    r#"Warning: Unable to delete file "{}", {}"#,
+                    file.display(),
+                    err
+                );
+            }
         }
 
         println!(r#"Ok  : "{}" -> "{}""#, file.display(), out_path.display());
