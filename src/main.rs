@@ -24,16 +24,11 @@ fn decode(files: &Vec<Box<Path>>) -> usize {
     let mut count = 0usize;
     let mut buf = [0; 16 * 1024];
     for file in files {
-        let mut origin = match fs::File::open(file) {
-            Ok(val) => match decoder::new(val) {
-                Some(val) => val,
-                None => {
-                    println!(r#"Skip: "{}", no decoder"#, file.display());
-                    continue;
-                }
-            },
-            Err(_) => {
-                println!(r#"Skip: "{}", file not found"#, file.display());
+        // 使用新的解码器工厂，支持多种格式
+        let mut origin = match decoder::new_from_file(file) {
+            Some(val) => val,
+            None => {
+                println!(r#"Skip: "{}", no decoder"#, file.display());
                 continue;
             }
         };
